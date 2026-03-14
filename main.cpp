@@ -7,7 +7,7 @@
 void Initialize();
 void BestFit();
 int FirstFit();
-void NextFit();
+int NextFit();
 void WorstFit();
 
 std::vector<Process> processVector;
@@ -20,15 +20,25 @@ int main()
 {
     Initialize();
 
-    std::cout << "\nFirst Fit Waste: " << FirstFit() << "\n\n";
+    std::cout << "\nNext Fit Waste: " << NextFit() << "\n\n";
 
     for (const Partition& partition : partitionVector)
     {
-        std::cout << "Partition " << partition.GetID() << ": Assigned Process ID: " << partition.GetAssignedProcessID() << "\n";
+        std::cout << "Partition " << partition.GetID() + 1 << ": Assigned Process ID: " << partition.GetAssignedProcessID() + 1 << "\n";
     }
+
+    std::cout << "\n";
+
     for (const Process& process : processVector)
     {
-        std::cout << "Process " << process.GetID() << ": Assigned Partition ID: " << process.GetAssignedPartitionID() << "\n";
+        std::cout << "Process " << process.GetID() + 1 << ": Assigned Partition ID: " << process.GetAssignedPartitionID() + 1;
+
+        if (process.GetAssignedPartitionID() == -1)
+        {
+            std::cout << " (Waiting)";
+        }
+
+        std::cout << "\n";
     }
 
     return 0;
@@ -36,6 +46,24 @@ int main()
 
 void Initialize()
 {
+    // Pre-defined test values.
+    processVector.emplace_back(200);
+    processVector.emplace_back(100);
+    processVector.emplace_back(300);
+    processVector.emplace_back(300);
+    processVector.emplace_back(200);
+
+    processCount = 5;
+
+    partitionVector.emplace_back(100);
+    partitionVector.emplace_back(300);
+    partitionVector.emplace_back(200);
+    partitionVector.emplace_back(450);
+
+    partitionCount = 4;
+
+    return;
+
     std::cout << "Enter process count: ";
     std::cin >> processCount;
 
@@ -87,13 +115,8 @@ int FirstFit()
             Partition& currentPartition = partitionVector.at(j);
             int partitionSize = currentPartition.GetSize();
 
-            if (processSize <= partitionSize)
+            if (processSize <= partitionSize && !currentPartition.IsInUse())
             {
-                if (currentPartition.IsInUse())
-                {
-                    continue;
-                }
-
                 currentProcess.SetAssignedPartitionID(currentPartition.GetID());
                 currentPartition.SetAssignedProcessID(currentProcess.GetID());
 
@@ -107,8 +130,49 @@ int FirstFit()
     return totalWaste;
 }
 
-void NextFit()
+int NextFit()
 {
+    int totalWaste = 0;
+    int checkedPartitionCount = 0;
+    int lastIndex = 0;
+
+    for (int i = 0; i < processCount; i++)
+    {
+        Process &currentProcess = processVector.at(i);
+        int processSize = currentProcess.GetSize();
+
+        for (int j = lastIndex; j < partitionCount; j++)
+        {
+            Partition &currentPartition = partitionVector.at(j);
+            int partitionSize = currentPartition.GetSize();
+
+            if (processSize <= partitionSize && !currentPartition.IsInUse())
+            {
+                currentProcess.SetAssignedPartitionID(currentPartition.GetID());
+                currentPartition.SetAssignedProcessID(currentProcess.GetID());
+
+                lastIndex = j;
+                totalWaste += partitionSize - processSize;
+
+                break;
+            }
+            else
+            {
+                if (checkedPartitionCount == partitionCount)
+                {
+                    checkedPartitionCount = 0;
+                    break;
+                }
+
+                if (lastIndex == partitionCount)
+                {
+                    lastIndex = 0;
+                }
+            }
+        }
+    }
+
+    return totalWaste;
 }
 
 void WorstFit()
