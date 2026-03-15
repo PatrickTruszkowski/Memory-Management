@@ -5,10 +5,10 @@
 #include "Partition.h"
 
 void Initialize();
-void BestFit();
+int BestFit();
 int FirstFit();
 int NextFit();
-void WorstFit();
+int WorstFit();
 
 std::vector<Process> processVector;
 std::vector<Partition> partitionVector;
@@ -20,7 +20,7 @@ int main()
 {
     Initialize();
 
-    std::cout << "\nNext Fit Waste: " << NextFit() << "\n\n";
+    std::cout << "\nBest Fit Waste: " << BestFit() << "\n\n";
 
     for (const Partition& partition : partitionVector)
     {
@@ -97,8 +97,51 @@ void Initialize()
     }
 }
 
-void BestFit()
+int BestFit()
 {
+    int totalWaste = 0;
+    int lowestWaste = 0xFFFFFF;
+    int lowestWastePartitionIndex = -1;
+
+    for (int i = 0; i < processCount; i++)
+    {
+        Process& currentProcess = processVector.at(i);
+        int processSize = currentProcess.GetSize();
+
+        for (int j = 0; j < partitionCount; j++)
+        {
+            Partition& currentPartition = partitionVector.at(j);
+            int partitionSize = currentPartition.GetSize();
+
+            if (processSize <= partitionSize && !currentPartition.IsInUse())
+            {
+                int currentWaste = partitionSize - processSize;
+
+                if (lowestWaste > currentWaste)
+                {
+                    lowestWaste = currentWaste;
+                    lowestWastePartitionIndex = j;
+                }
+            }
+        }
+
+        if (lowestWastePartitionIndex == -1)
+        {
+            continue;
+        }
+
+        Partition& lowestWastePartition = partitionVector.at(lowestWastePartitionIndex);
+
+        currentProcess.SetAssignedPartitionID(lowestWastePartition.GetID());
+        lowestWastePartition.SetAssignedProcessID(currentProcess.GetID());
+
+        totalWaste += lowestWaste;
+
+        lowestWaste = 0xFFFFFF;
+        lowestWastePartitionIndex = -1;
+    }
+
+    return totalWaste;
 }
 
 int FirstFit()
@@ -138,12 +181,12 @@ int NextFit()
 
     for (int i = 0; i < processCount; i++)
     {
-        Process &currentProcess = processVector.at(i);
+        Process& currentProcess = processVector.at(i);
         int processSize = currentProcess.GetSize();
 
         for (int j = lastIndex; j < partitionCount; j++)
         {
-            Partition &currentPartition = partitionVector.at(j);
+            Partition& currentPartition = partitionVector.at(j);
             int partitionSize = currentPartition.GetSize();
 
             if (processSize <= partitionSize && !currentPartition.IsInUse())
@@ -175,6 +218,6 @@ int NextFit()
     return totalWaste;
 }
 
-void WorstFit()
+int WorstFit()
 {
 }
