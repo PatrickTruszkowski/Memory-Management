@@ -33,7 +33,7 @@ int main()
     {
         std::cout << "Process " << process.GetID() + 1 << ": Assigned Partition ID: " << process.GetAssignedPartitionID() + 1;
 
-        if (process.GetAssignedPartitionID() == -1)
+        if (process.IsWaiting())
         {
             std::cout << " (Waiting)";
         }
