@@ -10,6 +10,8 @@ private:
 public:
     Partition(int);
 
+    static void ResetIDs();
+
     int GetID() const;
     bool IsInUse() const;
     int GetSize() const;

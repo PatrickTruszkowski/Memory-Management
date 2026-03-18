@@ -1,14 +1,24 @@
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include "Process.h"
 #include "Partition.h"
 
+// Algorithms
 void Initialize();
-int BestFit();
-int FirstFit();
-int NextFit();
-int WorstFit();
+void BestFit();
+void FirstFit();
+void NextFit();
+void WorstFit();
+
+// Display helpers
+void DisplayTitle(const std::string&);
+void DisplayWaitingProcess(const Process&);
+void DisplayRunningProcess(const Process&, int);
+void DisplaySummary(int);
+
+void ResetData();
 
 std::vector<Process> processVector;
 std::vector<Partition> partitionVector;
@@ -19,34 +29,19 @@ int partitionCount = 0;
 int main()
 {
     Initialize();
+    BestFit();
 
-    std::cout << "\nBest Fit Waste: " << BestFit() << "\n\n";
+    ResetData();
 
-    for (const Partition& partition : partitionVector)
-    {
-        std::cout << "Partition " << partition.GetID() + 1 << ": Assigned Process ID: " << partition.GetAssignedProcessID() + 1 << "\n";
-    }
-
-    std::cout << "\n";
-
-    for (const Process& process : processVector)
-    {
-        std::cout << "Process " << process.GetID() + 1 << ": Assigned Partition ID: " << process.GetAssignedPartitionID() + 1;
-
-        if (process.IsWaiting())
-        {
-            std::cout << " (Waiting)";
-        }
-
-        std::cout << "\n";
-    }
+    Initialize();
+    FirstFit();
 
     return 0;
 }
 
 void Initialize()
 {
-    // Pre-defined test values.
+    // Pre-defined test values
     processVector.emplace_back(200);
     processVector.emplace_back(100);
     processVector.emplace_back(300);
@@ -97,8 +92,10 @@ void Initialize()
     }
 }
 
-int BestFit()
+void BestFit()
 {
+    DisplayTitle("Best Fit");
+
     int totalWaste = 0;
     int lowestWaste = 0xFFFFFF;
     int lowestWastePartitionIndex = -1;
@@ -127,6 +124,8 @@ int BestFit()
 
         if (lowestWastePartitionIndex == -1)
         {
+            DisplayWaitingProcess(currentProcess);
+
             continue;
         }
 
@@ -137,15 +136,19 @@ int BestFit()
 
         totalWaste += lowestWaste;
 
+        DisplayRunningProcess(currentProcess, lowestWaste);
+
         lowestWaste = 0xFFFFFF;
         lowestWastePartitionIndex = -1;
     }
 
-    return totalWaste;
+    DisplaySummary(totalWaste);
 }
 
-int FirstFit()
+void FirstFit()
 {
+    DisplayTitle("First Fit");
+
     int totalWaste = 0;
 
     for (int i = 0; i < processCount; i++)
@@ -163,17 +166,25 @@ int FirstFit()
                 currentProcess.SetAssignedPartitionID(currentPartition.GetID());
                 currentPartition.SetAssignedProcessID(currentProcess.GetID());
 
-                totalWaste += partitionSize - processSize;
+                int currentWaste = partitionSize - processSize;
+                totalWaste += currentWaste;
+
+                DisplayRunningProcess(currentProcess, currentWaste);
 
                 break;
             }
         }
+
+        if (currentProcess.IsWaiting())
+        {
+            DisplayWaitingProcess(currentProcess);
+        }
     }
 
-    return totalWaste;
+    DisplaySummary(totalWaste);
 }
 
-int NextFit()
+void NextFit()
 {
     int totalWaste = 0;
     int checkedPartitionCount = 0;
@@ -214,10 +225,80 @@ int NextFit()
             }
         }
     }
-
-    return totalWaste;
 }
 
-int WorstFit()
+void WorstFit()
 {
+    int totalWaste = 0;
+    int highestWaste = -1;
+    int highestWastePartitionIndex = -1;
+
+    for (int i = 0; i < processCount; i++)
+    {
+        Process &currentProcess = processVector.at(i);
+        int processSize = currentProcess.GetSize();
+
+        for (int j = 0; j < partitionCount; j++)
+        {
+            Partition &currentPartition = partitionVector.at(j);
+            int partitionSize = currentPartition.GetSize();
+
+            if (processSize <= partitionSize && !currentPartition.IsInUse())
+            {
+                int currentWaste = partitionSize - processSize;
+
+                if (highestWaste < currentWaste)
+                {
+                    highestWaste = currentWaste;
+                    highestWastePartitionIndex = j;
+                }
+            }
+        }
+
+        if (highestWastePartitionIndex == -1)
+        {
+            continue;
+        }
+
+        Partition &highestWastePartition = partitionVector.at(highestWastePartitionIndex);
+
+        currentProcess.SetAssignedPartitionID(highestWastePartition.GetID());
+        highestWastePartition.SetAssignedProcessID(currentProcess.GetID());
+
+        totalWaste += highestWaste;
+
+        highestWaste = -1;
+        highestWastePartitionIndex = -1;
+    }
+}
+
+void DisplayTitle(const std::string& titleName)
+{
+    std::cout << "\n------------------------------------------------------------------------\n ";
+    std::cout << "\t\t\t" << titleName << "\n\n";
+    std::cout << "Process ID\tPartition ID\tWaste\t\tStatus\n";
+}
+
+void DisplayWaitingProcess(const Process& process)
+{
+    std::cout << process.GetID() << "\t\t" << "-" << "\t\t-\t\t" << "Waiting\n";
+}
+
+void DisplayRunningProcess(const Process& process, int waste)
+{
+    std::cout << process.GetID() << "\t\t" << process.GetAssignedPartitionID() << "\t\t" << waste << "\t\t" << "Running\n";
+}
+
+void DisplaySummary(int totalWaste)
+{
+    std::cout << "\nTotal Waste: " << totalWaste << "\n";
+    std::cout << "------------------------------------------------------------------------\n\n";
+}
+
+void ResetData()
+{
+    processVector.clear();
+    partitionVector.clear();
+    Process::ResetIDs();
+    Partition::ResetIDs();
 }

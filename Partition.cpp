@@ -1,10 +1,15 @@
 #include "Partition.h"
 
-int Partition::lastPartitionID = 0;
+int Partition::lastPartitionID = 1;
 
 Partition::Partition(int size) : ID(lastPartitionID), size(size), assignedProcessID(-1)
 {
     lastPartitionID++;
+}
+
+void Partition::ResetIDs()
+{
+    lastPartitionID = 1;
 }
 
 int Partition::GetID() const

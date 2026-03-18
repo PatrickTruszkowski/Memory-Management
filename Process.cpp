@@ -1,10 +1,15 @@
 #include "Process.h"
 
-int Process::lastProcessID = 0;
+int Process::lastProcessID = 1;
 
 Process::Process(int size) : ID(lastProcessID), size(size), assignedPartitionID(-1)
 {
     lastProcessID++;
+}
+
+void Process::ResetIDs()
+{
+    lastProcessID = 1;
 }
 
 int Process::GetID() const

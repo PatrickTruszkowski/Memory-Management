@@ -10,6 +10,8 @@ private:
 public:
     Process(int);
 
+    static void ResetIDs();
+
     int GetID() const;
     bool IsWaiting() const;
     int GetSize() const;
