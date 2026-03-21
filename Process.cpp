@@ -2,7 +2,7 @@
 
 int Process::lastProcessID = 1;
 
-Process::Process(int size) : ID(lastProcessID), size(size), assignedPartitionID(-1)
+Process::Process(int size) : ID(lastProcessID), size(size), assignedPartitionID(0)
 {
     lastProcessID++;
 }
@@ -19,7 +19,7 @@ int Process::GetID() const
 
 bool Process::IsWaiting() const
 {
-    return assignedPartitionID == -1;
+    return assignedPartitionID == 0;
 }
 
 int Process::GetSize() const
